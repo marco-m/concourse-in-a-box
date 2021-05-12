@@ -4,7 +4,11 @@ set -e -u
 
 cd $(dirname $0)
 
-concourse generate-key -t rsa -b 1024 -f session_signing_key
-concourse generate-key -t ssh -b 1024 -f tsa_host_key
-concourse generate-key -t ssh -b 1024 -f worker_key
+concourse generate-key -t rsa -f session_signing_key
+concourse generate-key -t ssh -f tsa_host_key
+concourse generate-key -t ssh -f worker_key
 cp worker_key.pub authorized_worker_keys
+
+chmod 600 session_signing_key
+chmod 600 tsa_host_key
+chmod 600 worker_key
