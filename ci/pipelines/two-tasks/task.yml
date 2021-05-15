@@ -1,0 +1,14 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source: {repository: alpine}
+
+run:
+  path: sh
+  args:
+  - -exc
+  - |
+    whoami
+    env

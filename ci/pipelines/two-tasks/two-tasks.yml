@@ -1,0 +1,26 @@
+---
+jobs:
+
+- name: hello-job
+  plan:
+    - get: concourse-in-a-box
+      trigger: true
+    - task: hello-embedded
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source: {repository: alpine}
+        run:
+          path: echo
+          args: ["Hello, world!"]
+    - task: hello-from-taskfile
+      file: concourse-in-a-box/ci/pipelines/two-tasks/task.yml
+
+resources:
+  - name: concourse-in-a-box
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/marco-m/concourse-in-a-box.git
+      branch: master

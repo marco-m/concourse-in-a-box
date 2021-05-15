@@ -1,0 +1,17 @@
+---
+platform: linux
+image_resource:
+  type: registry-image
+  source: {repository: alpine}
+outputs:
+  - name: gift
+run:
+  path: sh
+  args:
+    - -c
+    - |
+      set -e
+      set -x
+      VERSION=$(date +%Y%m%d%H%M%S)
+      GIFT=gift/gift-$VERSION
+      echo "hello" > $GIFT

@@ -26,8 +26,6 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 
 # Usage
 
-NOTE: This is not a Concourse tutorial, it contains only terse instructions to get started.
-
 ## Common setup and teardown
 
 * Download the images and start the containers:

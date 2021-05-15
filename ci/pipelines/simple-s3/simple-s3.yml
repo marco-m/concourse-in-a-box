@@ -1,0 +1,31 @@
+---
+jobs:
+  - name: hello-job
+    plan:
+      - get: concourse-in-a-box
+        trigger: true
+      - task: make-gift
+        file: concourse-in-a-box/ci/pipelines/simple-s3/make-gift.yml
+      - put: artifacts
+        params: {file: gift/gift-*}
+
+
+resources:
+  - name: concourse-in-a-box
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/marco-m/concourse-in-a-box.git
+      branch: master
+
+  - name: artifacts
+    type: s3
+    icon: gift
+    source:
+      bucket: concourse
+      # convention: builds/<pipeline-name>/<versioned-package-name>
+      regexp: builds/simple-s3/gift-(.*)
+      endpoint: ((s3-endpoint))
+      region_name: ((s3-region))
+      access_key_id: ((s3-access-key))
+      secret_access_key: ((s3-secret-key))
