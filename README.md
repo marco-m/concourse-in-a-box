@@ -6,10 +6,6 @@ All-in-one [Concourse] CI/CD system based on Docker Compose, with Minio S3-compa
 2. Troubleshoot production Concourse pipelines in a stand-alone environment.
 3. Write Concourse pipelines that can be reused as-is in your production environment, since it comes with S3 and secret store.
 
-# Status
-
-NOT YET READY FOR USAGE
-
 # Security considerations
 
 This project is NOT adapted for production or networked use.
@@ -18,13 +14,15 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 
 # What's in the box
 
-* [Concourse] 7.2.0 web
+* [Concourse] v7.2.0 web
 * Concourse worker (platform: Linux)
-* [PostgreSQL] 13.2 (needed by Concourse web)
-* [Minio] XXX S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
-* [HashiCorp Vault] XXX secret and credential manager. With this, you can learn writing real-world Concourse pipelines following security and operations best practices. See also [Concourse credential management] for how Concourse uses Vault.
+* [PostgreSQL] v13.2 (needed by Concourse web)
+* [Minio] v2021-05 S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
+* [HashiCorp Vault] v1.7.1 secret and credential manager. With this, you can learn writing real-world Concourse pipelines following security and operations best practices. See also [Concourse credential management] for how Concourse uses Vault.
 
 # Usage
+
+The various credentials are in file [env](./.env) and can be changed if you wish. They will be read automatically by `docker compose`.
 
 ## Common setup and teardown
 
@@ -43,9 +41,9 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 
 ## Concourse setup
 
-* Point your web browser to http://localhost:8080 and follow the instructions:
+* Point your web browser to http://localhost:8080 and follow the instructions there:
   * Download the `fly` command-line tool and put it in your $PATH.
-  * Login to the web interface (credentials are in docker-compose.yml, `CONCOURSE_ADD_LOCAL_USER`)
+  * Login to the web interface.
 * In another terminal, login with `fly` (will open the web browser to finish authentication):
   ```
   $ fly --target=ci login --concourse-url=http://localhost:8080 --open-browser
@@ -54,21 +52,26 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 
 ## Minio S3 setup
 
-* The docker-compose file creates a bucket named `artifacts`
-* Optional: point your browser to http://localhost:9000 and login (credentials are in docker-compose.yml file).
+* The `minio-setup` container creates a bucket named `concourse`.
+* Optional: point your browser to http://localhost:9000 and login.
 * Optional: follow [mc documentation] and install the command-line client `mc`.
+* If you want to create additional buckets, you can add to [scripts/minio-setup.sh](scripts/minio-setup.sh).
 
 ## Vault setup
 
-* WRITEME
+* For the time being vault is configured in dev mode, which means that the storage backend is in memory and will not be persisted to disk.
+* The `vault-setup` container adds the S3 secrets to vault.
+* Optional: point your browser to http://localhost:8200 and login.
+* Optional: follow [vault download], install the command-line utility `vault` and login.
+* If you want to create more secrets, see [scripts/vault-setup.sh](scripts/vault-setup.sh).
 
 # Concourse primer
 
-Have a look at [Concourse incomplete primer](./doc/concourse-primer.md)
+Have a look at [Concourse incomplete primer](./doc/concourse-primer.md).
 
 # Known issues
 
-* The scheduling of Concourse 7.x is slow, it takes 5-10 seconds to decide what to do next. There are various opened tickets about this behavior.
+* The scheduling of Concourse 7.x is slow, it takes 5-10 seconds to decide what to do next. There are various open tickets about this behavior.
 
 # History and credits
 
@@ -76,7 +79,9 @@ This project builds upon what I learned in my previous approach, VM-based: [conc
 
 This project is just an humble collection of great open source software.
 
+# License
 
+[MIT](LICENSE).
 
 
 [concourse]: https://concourse-ci.org/
@@ -85,4 +90,5 @@ This project is just an humble collection of great open source software.
 [minio]: https://min.io/
 [mc documentation]: https://docs.min.io/minio/baremetal/reference/minio-cli/minio-mc.html
 [HashiCorp Vault]: https://www.hashicorp.com/products/vault
+[vault download]: https://www.vaultproject.io/downloads
 [PostgreSQL]: https://www.postgresql.org/
