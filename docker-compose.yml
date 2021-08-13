@@ -10,10 +10,11 @@ version: "3.9"
 
 services:
   minio:
-    image: minio/minio:RELEASE.2021-05-11T23-27-41Z
-    command: server /minio-storage
+    image: minio/minio
+    command: server /minio-storage --console-address ":9001"
     ports:
     - 9000:9000
+    - 9001:9001
     environment:
       MINIO_REGION_NAME: &minio-region ${MINIO_REGION_NAME}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
@@ -21,7 +22,7 @@ services:
 
   # This container will stop as soon as the script has run.
   minio-setup:
-    image: minio/mc:RELEASE.2021-05-12T01-29-06Z
+    image: minio/mc
     depends_on:
       - minio
     volumes:

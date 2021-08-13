@@ -17,7 +17,7 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 * [Concourse] v7.3.0 web
 * Concourse worker (platform: Linux)
 * [PostgreSQL] v13.2 (needed by Concourse web)
-* [Minio] v2021-05 S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
+* [Minio] latest stable S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
 * [HashiCorp Vault] v1.7.1 secret and credential manager. With this, you can learn writing real-world Concourse pipelines following security and operations best practices. See also [Concourse credential management] for how Concourse uses Vault.
 
 # Usage
