@@ -14,8 +14,8 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 
 # What's in the box
 
-* [Concourse] v7.3.0 web
-* Concourse worker (platform: Linux)
+* [Concourse] v7.4.0 web
+* Concourse worker (same version as Concourse web, platform: Linux)
 * [PostgreSQL] v13.2 (needed by Concourse web)
 * [Minio] latest stable S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
 * [HashiCorp Vault] v1.7.1 secret and credential manager. With this, you can learn writing real-world Concourse pipelines following security and operations best practices. See also [Concourse credential management] for how Concourse uses Vault.
@@ -46,7 +46,7 @@ The various credentials are in file [env](./.env) and can be changed if you wish
   * Login to the web interface.
 * In another terminal, login with `fly` (will open the web browser to finish authentication):
   ```
-  $ fly --target=ci login --concourse-url=http://localhost:8080 --open-browser
+  $ fly --target=main login --concourse-url=http://localhost:8080 --open-browser
   ```
 * You can use anything as the value for `--target`, it is an alias for the connection to the given Concourse with the given credentials (see file `$HOME/.flyrc`).
 

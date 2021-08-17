@@ -72,7 +72,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
   web:
-    image: &concourse-image concourse/concourse:7.3.0
+    image: &concourse-image concourse/concourse:7.4.0
     command: web
     depends_on:
     - db
