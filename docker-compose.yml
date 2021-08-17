@@ -1,3 +1,5 @@
+version: '3'
+
 # NOTES
 # - Some environment variables are actually set in the file `.env` in the same directory.
 #   This allows, if you wish, to change some values and not having to modify this file.
@@ -6,7 +8,6 @@
 #   configuration DRYer. See for example
 #   https://docs.ansible.com/ansible/latest/user_guide/playbooks_advanced_syntax.html
 
-version: "3.9"
 
 services:
   minio:
@@ -64,8 +65,7 @@ services:
   db:
     image: postgres:13.2
     shm_size: 1gb
-    ports:
-    - 6543:5432
+    ports: [6543:5432]
     environment:
       POSTGRES_DB: &postgres-db concourse
       POSTGRES_USER: &postgres-user dev
@@ -78,8 +78,7 @@ services:
     - db
     - minio-setup
     - vault-setup
-    ports:
-    - 8080:8080
+    ports: [8080:8080]
     volumes:
     - "./concourse-keys:/concourse-keys"
     environment:
@@ -99,11 +98,12 @@ services:
       CONCOURSE_CLUSTER_NAME: dev
       CONCOURSE_ENABLE_PIPELINE_INSTANCES: "true"
       CONCOURSE_ENABLE_ACROSS_STEP: "true"
-
       # NOTE this connection is unencrypted!
       CONCOURSE_VAULT_URL: *vault-addr
       # NOTE In production you would NOT pass the root token!
       CONCOURSE_VAULT_CLIENT_TOKEN: ${VAULT_DEV_ROOT_TOKEN_ID}
+      CONCOURSE_ENABLE_CACHE_STREAMED_VOLUMES: "true"
+      CONCOURSE_ENABLE_RESOURCE_CAUSALITY: "true"
 
   worker:
     image: *concourse-image
@@ -117,21 +117,17 @@ services:
     - "./concourse-keys:/concourse-keys"
     stop_signal: SIGUSR2
     environment:
-      CONCOURSE_RUNTIME: guardian
-      # containerd is buggy on concourse 7.2.0
-      #CONCOURSE_RUNTIME: containerd
+      CONCOURSE_RUNTIME: containerd
       CONCOURSE_NAME: worker-1
 
       CONCOURSE_TSA_PUBLIC_KEY: /concourse-keys/tsa_host_key.pub
       CONCOURSE_TSA_WORKER_PRIVATE_KEY: /concourse-keys/worker_key
-      CONCOURSE_TSA_HOST: web:2222
 
       CONCOURSE_LOG_LEVEL: error
-      CONCOURSE_BAGGAGECLAIM_LOG_LEVEL: error
-      # FIXME THIS DOES NOTHING:
-      #CONCOURSE_CONTAINERD_LOG_LEVEL: error
-      CONCOURSE_GARDEN_LOG_LEVEL: error
+      CONCOURSE_TSA_HOST: web:2222
 
+      CONCOURSE_BAGGAGECLAIM_LOG_LEVEL: error
+      CONCOURSE_CONTAINERD_LOG_LEVEL: error
       CONCOURSE_BIND_IP: 0.0.0.0
       CONCOURSE_BAGGAGECLAIM_BIND_IP: 0.0.0.0
 
@@ -139,5 +135,4 @@ services:
       CONCOURSE_BAGGAGECLAIM_DRIVER: overlay
 
       # work with docker-compose's dns
-      #CONCOURSE_CONTAINERD_DNS_PROXY_ENABLE: "true"
-      CONCOURSE_GARDEN_DNS_PROXY_ENABLE: "true"
+      CONCOURSE_CONTAINERD_DNS_PROXY_ENABLE: "true"
