@@ -5,7 +5,7 @@ jobs:
       - get: concourse-in-a-box
         trigger: true
       - task: make-gift
-        file: concourse-in-a-box/ci/pipelines/simple-s3/make-gift.yml
+        file: concourse-in-a-box/ci/pipelines/03-simple-s3/make-gift.yml
       - put: artifacts
         params: {file: gift/gift-*}
 

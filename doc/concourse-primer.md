@@ -29,10 +29,10 @@ You can run individually each task that compose a pipeline. This can be useful i
 
 Contrary to whole pipelines or single jobs within a pipeline, running a task with `fly execute` doesn't show up in the Concourse UI, it is seen only in the output of `fly execute` itself.
 
-We will be running the [ci/pipelines/two-tasks/task.yml](../ci/pipelines/two-tasks/task.yml) task:
+We will be running the [ci/pipelines/02-two-tasks/task.yml](../ci/pipelines/02-two-tasks/task.yml) task:
 
 ```
-$ fly -t main execute -c ./ci/pipelines/two-tasks/task.yml
+$ fly -t main execute -c ./ci/pipelines/02-two-tasks/task.yml
 executing build 42 at http://localhost:8080/builds/42
 [...]
 running sh -exc whoami
@@ -51,12 +51,13 @@ succeeded
 
 ## Set your first pipeline
 
-The [ci/pipelines/hello-world/hello-world.yml](../ci/pipelines/hello-world/hello-world.yml) has one job and that job contains one embedded task. Since the task is embedded, we can set this pipeline without the need to refer to a git repository.
+The [ci/pipelines/01-hello-world/hello-world.yml](../ci/pipelines/01-hello-world/hello-world.yml) has one job and that job contains one embedded task.
+Since the task is embedded, we can set this pipeline without the need to refer to a git repository.
 
 Although this is quite an artificial example, it is as simple as it gets.
 
 ```
-$ fly -t main set-pipeline -p hello-world -c ci/pipelines/hello-world/hello-world.yml
+$ fly -t main set-pipeline -p hello-world -c ci/pipelines/01-hello-world/hello-world.yml
 [...]
 pipeline name: hello-world
 
@@ -110,7 +111,7 @@ succeeded
 
 ## Set your second pipeline
 
-The [ci/pipelines/two-tasks/two-tasks.yml](../ci/pipelines/two-tasks/two-tasks.yml) pipeline contains two tasks, one embedded in the pipeline itself (as in the previous example) and one loaded from a task file.
+The [ci/pipelines/02-two-tasks/two-tasks.yml](../ci/pipelines/02-two-tasks/two-tasks.yml) pipeline contains two tasks, one embedded in the pipeline itself (as in the previous example) and one loaded from a task file.
 
 Although having external task files requires more setup, it has two advantages:
 
@@ -120,7 +121,7 @@ Although having external task files requires more setup, it has two advantages:
 Since the pipeline refers to an external task file, we need to tell it where to find such file. To do so we use the Concourse git resource.
 
 ```
-fly -t main set-pipeline -p two-tasks -c ci/pipelines/two-tasks/two-tasks.yml
+fly -t main set-pipeline -p two-tasks -c ci/pipelines/02-two-tasks/two-tasks.yml
 [..]
 pipeline name: two-tasks
 
@@ -137,14 +138,14 @@ This time, instead of using `fly`, start the jobs from the web UI, then go back 
 
 ## Set your third pipeline and use your secrets
 
-The [ci/pipelines/simple-s3/simple-s3.yml](../ci/pipelines/simple-s3/simple-s3.yml) is becoming a real-world pipeline:
+The [ci/pipelines/03-simple-s3/simple-s3.yml](../ci/pipelines/03-simple-s3/simple-s3.yml) is becoming a real-world pipeline:
 
 * it gets S3 secrets from Vault
 * it gets code and pipeline configuration from a git repository
 * it pushes the artifacts to Minio S3
 
 ```
-$ fly -t main set-pipeline -p simple-s3 -c ci/pipelines/simple-s3/simple-s3.yml
+$ fly -t main set-pipeline -p simple-s3 -c ci/pipelines/03-simple-s3/simple-s3.yml
 ```
 
 * As usual, unpause the pipeline and trigger the `hello-job`, either from the web UI or with `fly`.
@@ -160,6 +161,45 @@ $ fly -t main set-pipeline -p simple-s3 -c ci/pipelines/simple-s3/simple-s3.yml
   ```
 
 :-)
+
+## Explore instanced pipelines
+
+Concourse 7.4 brought instanced pipelines, which is a way to group together highly related pipelines, for example supporting multiple release branches for the same project.
+See the [official documentation](https://concourse-ci.org/instanced-pipelines.html) for details.
+
+Our sample pipeline is at [ci/pipelines/04-instanced-pipelines/instanced.yml](ci/pipelines/04-instanced-pipelines/instanced.yml).
+
+Set the first pipeline, to release the versions in 1.x:
+
+```
+$ fly -t main set-pipeline -p foo-release \
+    -c ci/pipelines/04-instanced-pipelines/instanced.yml \
+    --instance-var version=1.0.x
+```
+
+Set the second pipeline (from the same pipeline configuration file), to release the versions in 2.x:
+
+```
+$ fly -t main set-pipeline -p foo-release \
+    -c ci/pipelines/04-instanced-pipelines/instanced.yml \
+    --instance-var version=2.0.x
+```
+
+Note that:
+* the pipeline name stays the same: `foo-release`
+* we pass the value for the variable `((version))` with the special flag `--instance-var`
+
+In the UI, they appear as one pipeline, but with visual cues:
+
+![instanced pipelines in the "all pipelines" page](instanced-overview.png)
+
+In the same spirit, they do not take space in the list view:
+
+![instanced pipelines in the list view](instanced-list-view.png)
+
+Clicking on them opens a new view:
+
+![instanced pipelines in their dedicated overview](instanced-dedicated-overview.png)
 
 ## Where to go from here
 
