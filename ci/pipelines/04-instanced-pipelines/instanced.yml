@@ -1,0 +1,18 @@
+---
+jobs:
+
+- name: hello-job
+  plan:
+    - get: concourse-in-a-box
+      trigger: true
+    - task: hello-from-taskfile
+      file: concourse-in-a-box/ci/pipelines/04-instanced-pipelines/task.yml
+
+resources:
+  - name: concourse-in-a-box
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/marco-m/concourse-in-a-box.git
+      # The only difference between the pipelines is the git branch to use
+      branch: example-instanced/v((version))

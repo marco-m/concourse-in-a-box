@@ -162,6 +162,45 @@ $ fly -t main set-pipeline -p simple-s3 -c ci/pipelines/03-simple-s3/simple-s3.y
 
 :-)
 
+## Explore instanced pipelines
+
+Concourse 7.4 brought instanced pipelines, which is a way to group together highly related pipelines, for example supporting multiple release branches for the same project.
+See the [official documentation](https://concourse-ci.org/instanced-pipelines.html) for details.
+
+Our sample pipeline is at [ci/pipelines/04-instanced-pipelines/instanced.yml](ci/pipelines/04-instanced-pipelines/instanced.yml).
+
+Set the first pipeline, to release the versions in 1.x:
+
+```
+$ fly -t main set-pipeline -p foo-release \
+    -c ci/pipelines/04-instanced-pipelines/instanced.yml \
+    --instance-var version=1.0.x
+```
+
+Set the second pipeline (from the same pipeline configuration file), to release the versions in 2.x:
+
+```
+$ fly -t main set-pipeline -p foo-release \
+    -c ci/pipelines/04-instanced-pipelines/instanced.yml \
+    --instance-var version=2.0.x
+```
+
+Note that:
+* the pipeline name stays the same: `foo-release`
+* we pass the value for the variable `((version))` with the special flag `--instance-var`
+
+In the UI, they appear as one pipeline, but with visual cues:
+
+![instanced pipelines in the "all pipelines" page](instanced-overview.png)
+
+In the same spirit, they do not take space in the list view:
+
+![instanced pipelines in the list view](instanced-list-view.png)
+
+Clicking on them opens a new view:
+
+![instanced pipelines in their dedicated overview](instanced-dedicated-overview.png)
+
 ## Where to go from here
 
 * https://concourse-ci.org/examples.html
