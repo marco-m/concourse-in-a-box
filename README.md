@@ -26,10 +26,36 @@ The various credentials are in file [env](./.env) and can be changed if you wish
 
 ## Common setup and teardown
 
-* Download the images and start the containers:
+### Setup
+
+* Download the images:
+  ```
+  $ docker compose pull
+  ```
+
+* Start the containers:
   ```
   $ docker compose up
   ```
+
+### Verify setup
+
+The docker-compose file uses some short-lived containers to perform initialization. Given the amount of log output from `docker compose up`, failures can be hard to notice.
+
+Run `docker compose ps` and confirm that the containers ending with `-setup` have exited with a `0` state. If any of them exited with a different code, then look back at the logs from `docker compose up` and identify the problem.
+
+For example:
+
+```
+$ docker compose ps | grep setup
+concourse-in-a-box_minio-setup_1   /scripts/minio-setup.sh          Exit 1
+concourse-in-a-box_vault-setup_1   /scripts/vault-setup.sh          Exit 0
+```
+
+The minio setup failed.
+
+### Teardown
+
 * When done, remember to stop the containers:
   ```
   $ docker compose stop
