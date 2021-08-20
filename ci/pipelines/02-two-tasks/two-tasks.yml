@@ -15,7 +15,7 @@ jobs:
           path: echo
           args: ["Hello, world!"]
     - task: hello-from-taskfile
-      file: concourse-in-a-box/ci/pipelines/two-tasks/task.yml
+      file: concourse-in-a-box/ci/pipelines/02-two-tasks/task.yml
 
 resources:
   - name: concourse-in-a-box
