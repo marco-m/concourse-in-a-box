@@ -93,7 +93,7 @@ services:
       CONCOURSE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       CONCOURSE_POSTGRES_DATABASE: *postgres-db
       CONCOURSE_EXTERNAL_URL: http://localhost:8080
-      CONCOURSE_ADD_LOCAL_USER: ${CONCOURSE_MAIN_USER}:${CONCOURSE_MAIN_PASSWORD},${CONCOURSE_NORMAL_USER}:${CONCOURSE_NORMAL_PASSWORD}
+      CONCOURSE_ADD_LOCAL_USER: ${CONCOURSE_MAIN_USER}:${CONCOURSE_MAIN_PASSWORD},${CONCOURSE_NORMAL_USER}:${CONCOURSE_NORMAL_PASSWORD},${CONCOURSE_READONLY_USER}:${CONCOURSE_READONLY_PASSWORD}
       CONCOURSE_MAIN_TEAM_LOCAL_USER: ${CONCOURSE_MAIN_USER}
       CONCOURSE_CLUSTER_NAME: dev
       CONCOURSE_ENABLE_PIPELINE_INSTANCES: "true"
@@ -104,6 +104,18 @@ services:
       CONCOURSE_VAULT_CLIENT_TOKEN: ${VAULT_DEV_ROOT_TOKEN_ID}
       CONCOURSE_ENABLE_CACHE_STREAMED_VOLUMES: "true"
       CONCOURSE_ENABLE_RESOURCE_CAUSALITY: "true"
+
+  # This container will stop as soon as the script has run.
+  web-setup:
+    image: alpine/curl
+    depends_on:
+      - web
+    volumes:
+      - "./scripts:/scripts"
+    environment:
+      CONCOURSE_ADDR: web:8080
+
+    entrypoint: /scripts/concourse-setup.sh
 
   worker:
     image: *concourse-image

@@ -1,0 +1,11 @@
+# See https://concourse-ci.org/managing-teams.html#setting-roles
+
+roles:
+  - name: owner
+    local:
+      users:
+        - dev
+  - name: viewer
+    local:
+      users:
+        - readonly
