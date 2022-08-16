@@ -1,6 +1,9 @@
 # Concourse incomplete primer
 
-See [README](../README.md) for how to login into Concourse with `fly`.
+See
+
+- [README](../README.md) for how to login into Concourse with `fly`.
+- [scripts](../scripts) for interesting scripts (using Vault, ...).
 
 ## Misc fly commands
 
@@ -200,6 +203,75 @@ In the same spirit, they do not take space in the list view:
 Clicking on them opens a new view:
 
 ![instanced pipelines in their dedicated overview](instanced-dedicated-overview.png)
+
+## Two level vars interpolation for parametric secrets
+
+This section is an approach to the question in https://github.com/concourse/concourse/discussions/8522.
+
+Reference: pipeline [two-level-interpolation](../ci/pipelines/05-two-level-interpolation/two-level-interpolation.yml)
+
+The task
+
+```yaml
+    - task: interpolation
+      file: concourse-in-a-box/ci/pipelines/05-two-level-interpolation/task.yml
+      params:
+        ENV: ((env))
+        COLOR: ((color))
+        SECRET_1: ((secret-1.((env))-((color))))
+        SECRET_2: ((secret-2.((env))-((color))))
+```
+
+Uses a two level vars interpolation.
+
+For example if we do
+
+```text
+$ fly -t dev set-pipeline -p interpolation-staging-green \
+  -c two-level-interpolation.yml \
+  -y env=staging \
+  -y color=green
+```
+
+We get:
+
+```yaml
+      SECRET_1: ((secret-1.staging-green))
+      SECRET_2: ((secret-2.staging-green))
+```
+
+For a total of `T = S_N * E_N * C_N` combinations
+
+where:
+
+- S_N number of secrets
+- E_N number of environments (2: prod and staging, or more)
+- C_N number of colors (probably 2: blue and green)
+
+
+Once we inject the secrets into Vault:
+
+```
+$ vault kv put /concourse/developers/secret-1.staging-green \
+  value="I am secret 1 for staging green"
+$ vault kv put /concourse/developers/secret-2.staging-green \
+  value="I am secret 2 for staging green"
+```
+
+Running the job:
+
+```
+selected worker: worker-1
+...
++ env
+...
+ENV=staging
+COLOR=green
+SECRET_1=I am secret 1 for staging green
+SECRET_2=I am secret 2 for staging green
+```
+
+
 
 ## Where to go from here
 
