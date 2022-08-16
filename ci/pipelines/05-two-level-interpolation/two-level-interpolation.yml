@@ -1,0 +1,27 @@
+# This pipeline shows an approach to solve
+# https://github.com/concourse/concourse/discussions/8522
+
+---
+jobs:
+
+- name: hello-job
+  plan:
+    - get: concourse-in-a-box
+      trigger: true
+    - task: interpolation
+      file: concourse-in-a-box/ci/pipelines/05-two-level-interpolation/task.yml
+      params:
+        ENV: ((env))
+        COLOR: ((color))
+        SECRET_1: ((secret-1-((env))-((color))))
+        SECRET_2: ((secret-2-((env))-((color))))
+
+################################################################################
+
+resources:
+  - name: concourse-in-a-box
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/marco-m/concourse-in-a-box.git
+      branch: master
