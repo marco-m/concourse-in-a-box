@@ -218,8 +218,8 @@ The task
       params:
         ENV: ((env))
         COLOR: ((color))
-        SECRET_1: ((secret-1.((env))-((color))))
-        SECRET_2: ((secret-2.((env))-((color))))
+        SECRET_1: ((secret-1-((env))-((color))))
+        SECRET_2: ((secret-2-((env))-((color))))
 ```
 
 Uses a two level vars interpolation.
@@ -236,8 +236,8 @@ $ fly -t dev set-pipeline -p interpolation-staging-green \
 We get:
 
 ```yaml
-      SECRET_1: ((secret-1.staging-green))
-      SECRET_2: ((secret-2.staging-green))
+      SECRET_1: ((secret-1-staging-green))
+      SECRET_2: ((secret-2-staging-green))
 ```
 
 For a total of `T = S_N * E_N * C_N` combinations
@@ -252,9 +252,9 @@ where:
 Once we inject the secrets into Vault:
 
 ```
-$ vault kv put /concourse/developers/secret-1.staging-green \
+$ vault kv put /concourse/developers/secret-1-staging-green \
   value="I am secret 1 for staging green"
-$ vault kv put /concourse/developers/secret-2.staging-green \
+$ vault kv put /concourse/developers/secret-2-staging-green \
   value="I am secret 2 for staging green"
 ```
 
