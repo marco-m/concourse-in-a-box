@@ -10,7 +10,7 @@ set -e
 # https://docs.docker.com/engine/reference/builder/#healthcheck
 echo
 echo "***** Sleeping a few seconds to allow Concourse to startup"
-sleep 5
+sleep 7
 
 echo
 echo "***** Downloading fly from the local Concourse"

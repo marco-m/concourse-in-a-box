@@ -14,7 +14,7 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 
 # What's in the box
 
-* [Concourse] v7.8.0 (ATC and web UI)
+* [Concourse] v7.8.2 (ATC and web UI)
 * Concourse worker (platform: Linux)
 * [PostgreSQL] v13.2 (needed by Concourse web)
 * [Minio] latest stable S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
