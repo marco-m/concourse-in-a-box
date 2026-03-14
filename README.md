@@ -12,6 +12,37 @@ This project is NOT adapted for production or networked use.
 
 Among other non-production ready settings, it contains hard-coded secrets, stored in the git repo. For production use, all secrets must be regenerated and must not be stored in the git repo!
 
+# Alternative to Docker: Colima
+
+This is especially useful for macOS. See https://github.com/abiosoft/colima for details.
+
+Short version:
+
+    brew install colima
+    brew install lima-additional-guestagents
+    brew install docker         <== the client only
+    brew install docker-buildx  <== "docker build" is deprecated
+    brew install docker-compose
+
+Start Colima with defaults, keep it in foreground:
+
+    colima start --foreground --memory 8 --cpu 4
+
+It will take a while the first time. When it prints
+
+    keeping Colima in the foreground, press ctrl+c to exit...
+
+You are ready to go. In another terminal, verify that the colima context is the default for docker:
+
+    docker context list | grep colima
+    colima * colima unix:///$HOME/.colima/default/docker.sock
+
+If there is no `*` in the output above, set the default context:
+
+    docker context use colima
+
+Now you are ready to use the `docker` and `docker compose` CLI tools and can follow the rest of the instructions.
+
 # What's in the box
 
 * [Concourse] v7.11.2 (ATC and web UI)
@@ -23,21 +54,19 @@ Among other non-production ready settings, it contains hard-coded secrets, store
 
 # Usage
 
-The various credentials are in file [env](./.env) and can be changed if you wish. They will be read automatically by `docker compose`.
+The various credentials (secrets) are in file [env](./.env) and can be changed if you wish. They will be read automatically by `docker compose`.
 
 ## Common setup and teardown
 
 ### Setup
 
 * Download the images:
-  ```
-  $ docker compose pull
-  ```
+
+      $ docker compose pull
 
 * Start the containers:
-  ```
-  $ docker compose up
-  ```
+
+      $ docker compose up
 
 ### Verify setup
 
@@ -47,24 +76,25 @@ Run `docker compose ps` and confirm that the containers ending with `-setup` hav
 
 For example:
 
-```
-$ docker compose ps | grep setup
-concourse-in-a-box_minio-setup_1   /scripts/minio-setup.sh          Exit 1
-concourse-in-a-box_vault-setup_1   /scripts/vault-setup.sh          Exit 0
-```
+    $ docker compose ps -a | grep setup
+    concourse-in-a-box_minio-setup_1   /scripts/minio-setup.sh          Exit 1
+    concourse-in-a-box_vault-setup_1   /scripts/vault-setup.sh          Exit 0
 
 The minio setup failed.
+
+To troubleshoot the health checks, you can use for example
+
+    docker inspect concourse-in-a-box-web-1 | jq -r ".[] | .State.Health"
 
 ### Teardown
 
 * When done, remember to stop the containers:
-  ```
-  $ docker compose stop
-  ```
+
+      $ docker compose stop
+
 * If you want to also delete the persistent volumes, in order to delete the Concourse build history and the contents of the Minio S3 buckets:
-  ```
-  $ docker compose down
-  ```
+
+      $ docker compose down --rmi local -v
 
 ## Concourse setup
 
@@ -72,9 +102,9 @@ The minio setup failed.
   * Download the `fly` command-line tool and put it in your $PATH.
   * Login to the web interface.
 * In another terminal, login with `fly` (will open the web browser to finish authentication):
-  ```
-  $ fly --target=main login --concourse-url=http://localhost:8080 --open-browser
-  ```
+
+      $ fly --target=main login --concourse-url=http://localhost:8080 --open-browser
+
 * You can use anything as the value for `--target`, it is an alias for the connection to the given Concourse with the given credentials (see file `$HOME/.flyrc`).
 
 ## Minio S3 setup
