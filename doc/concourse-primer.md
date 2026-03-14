@@ -152,7 +152,7 @@ $ fly -t main set-pipeline -p simple-s3 -c ci/pipelines/03-simple-s3/simple-s3.y
 ```
 
 * As usual, unpause the pipeline and trigger the `hello-job`, either from the web UI or with `fly`.
-* In the Minio web UI, have a look at bucket `concourse`, path `builds/simple-s3`.
+* In the Minio web UI (http://localhost:9000, see file env for the secrets), have a look at bucket `concourse`, path `builds/simple-s3`.
 * Do the same with the Minio CLI:
   ```
   $ mc ls concourse-minio/concourse/builds/simple-s3

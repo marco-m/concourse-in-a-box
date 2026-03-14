@@ -6,6 +6,14 @@
 #   configuration DRYer. See for example
 #   https://docs.ansible.com/ansible/latest/user_guide/playbooks_advanced_syntax.html
 
+networks:
+  default:
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: fdf1:f4a2:d53::/64
+          gateway: fdf1:f4a2:d53::ffff
 
 services:
   minio:
@@ -61,24 +69,35 @@ services:
     entrypoint: /scripts/vault-setup.sh
 
   db:
-    image: postgres:14.11
+    image: postgres:18.3
     shm_size: 1gb
     ports: [6543:5432]
     environment:
       POSTGRES_DB: &postgres-db concourse
       POSTGRES_USER: &postgres-user dev
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: ${AUTH_METHOD:-trust}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d concourse"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   web:
-    image: &concourse-image concourse/concourse:7.11.2
+    image: &concourse-image concourse/concourse:8.1.0
     command: web
     depends_on:
-    - db
-    - minio-setup
-    - vault-setup
+      db:
+        condition: service_healthy
+      minio-setup:
+        condition: service_started
+      vault-setup:
+        condition: service_started
     ports: [8080:8080]
+    networks:
+      - default
     volumes:
-    - "./concourse-keys:/concourse-keys"
+      - "./concourse-keys:/concourse-keys"
     environment:
       CONCOURSE_SESSION_SIGNING_KEY: /concourse-keys/session_signing_key
       CONCOURSE_TSA_AUTHORIZED_KEYS: /concourse-keys/authorized_worker_keys
@@ -94,8 +113,6 @@ services:
       CONCOURSE_ADD_LOCAL_USER: ${CONCOURSE_MAIN_USER}:${CONCOURSE_MAIN_PASSWORD},${CONCOURSE_NORMAL_USER}:${CONCOURSE_NORMAL_PASSWORD},${CONCOURSE_READONLY_USER}:${CONCOURSE_READONLY_PASSWORD}
       CONCOURSE_MAIN_TEAM_LOCAL_USER: ${CONCOURSE_MAIN_USER}
       CONCOURSE_CLUSTER_NAME: dev
-      CONCOURSE_ENABLE_PIPELINE_INSTANCES: "true"
-      CONCOURSE_ENABLE_ACROSS_STEP: "true"
       # NOTE this connection is unencrypted!
       CONCOURSE_VAULT_URL: *vault-addr
       # NOTE In production you would NOT pass the root token!
@@ -119,6 +136,11 @@ services:
     image: *concourse-image
     command: worker
     privileged: true
+    cgroup: host
+    networks:
+      - default
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     depends_on: [web]
     ports:
     - 7777:7777

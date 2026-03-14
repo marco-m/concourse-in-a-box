@@ -26,6 +26,8 @@ resources:
       # convention: builds/<pipeline-name>/<versioned-package-name>
       regexp: builds/simple-s3/gift-(.*)
       endpoint: ((s3-endpoint))
+      # Needed for Minio; not needed for S3.
+      use_path_style: true
       region_name: ((s3-region))
       access_key_id: ((s3-access-key))
       secret_access_key: ((s3-secret-key))

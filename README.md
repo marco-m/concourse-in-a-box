@@ -45,7 +45,7 @@ Now you are ready to use the `docker` and `docker compose` CLI tools and can fol
 
 # What's in the box
 
-* [Concourse] v7.11.2 (ATC and web UI)
+* [Concourse] v8.1.0 (ATC and web UI)
 * Concourse worker (platform: Linux)
 * [PostgreSQL] v14.11 (needed by Concourse web)
 * [Minio] latest stable S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
@@ -101,6 +101,10 @@ To troubleshoot the health checks, you can use for example
 * Point your web browser to http://localhost:8080 and follow the instructions there:
   * Download the `fly` command-line tool and put it in your $PATH.
   * Login to the web interface.
+* If on macOS, declare that fly is safe to use also if not signed or notarized:
+
+      xattr -d com.apple.quarantine ~/bin/fly
+
 * In another terminal, login with `fly` (will open the web browser to finish authentication):
 
       $ fly --target=main login --concourse-url=http://localhost:8080 --open-browser
@@ -129,6 +133,7 @@ Have a look at [Concourse incomplete primer](./doc/concourse-primer.md).
 # Known issues
 
 * The scheduling of Concourse 7.x is slow, it takes 5-10 seconds to decide what to do next. There are various open tickets about this behavior.
+* The same slowness is visible with 8.x. I think it might be a configuration problem, although I am using a docker-compose.yml very similar to upstream, according to the error messages I see from the worker. Need some time to investigate.
 
 # History and credits
 
