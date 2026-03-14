@@ -9,8 +9,10 @@ set -e
 # https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck
 # https://docs.docker.com/engine/reference/builder/#healthcheck
 echo
-echo "***** Sleeping a few seconds to allow Concourse to startup"
-sleep 7
+echo "***** Polling for Concourse readiness"
+curl --retry 12 --retry-all-errors --retry-delay 5 --retry-connrefused \
+    "http://$CONCOURSE_ADDR/api/v1/teams"
+sleep 1
 
 echo
 echo "***** Downloading fly from the local Concourse"
