@@ -1,0 +1,150 @@
+# NOTES
+# - Some environment variables are actually set in the file `.env` in the same directory.
+#   This allows, if you wish, to change some values and not having to modify this file.
+#   See https://docs.docker.com/compose/environment-variables/ for details.
+# - The funky notation &foo and *foo are YAML anchors and references, used to keep the
+#   configuration DRYer. See for example
+#   https://docs.ansible.com/ansible/latest/user_guide/playbooks_advanced_syntax.html
+
+
+services:
+  minio:
+    image: minio/minio
+    command: server /minio-storage --console-address ":9001"
+    ports:
+    - 9000:9000
+    - 9001:9001
+    environment:
+      MINIO_REGION_NAME: &minio-region ${MINIO_REGION_NAME}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+  # This container will stop as soon as the script has run.
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      - minio
+    volumes:
+    - "./scripts:/scripts"
+    environment:
+      MINIO_ADDR: &minio-addr http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    entrypoint: /scripts/minio-setup.sh
+
+  vault:
+    image: vault:1.13.1
+    command: server -dev
+    ports:
+    - 8200:8200
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID}
+    cap_add:
+    - IPC_LOCK
+
+  # This container will stop as soon as the script has run.
+  vault-setup:
+    image: vault:1.13.1
+    depends_on:
+    - vault
+    volumes:
+    - "./scripts:/scripts"
+    environment:
+      VAULT_ADDR: &vault-addr http://vault:8200
+      # NOTE In production you would NOT pass the root token!
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID}
+      MINIO_ADDR : *minio-addr
+      MINIO_REGION_NAME: *minio-region
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+    entrypoint: /scripts/vault-setup.sh
+
+  db:
+    image: postgres:14.11
+    shm_size: 1gb
+    ports: [6543:5432]
+    environment:
+      POSTGRES_DB: &postgres-db concourse
+      POSTGRES_USER: &postgres-user dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  web:
+    image: &concourse-image concourse/concourse:7.13.2
+    command: web
+    depends_on:
+    - db
+    - minio-setup
+    - vault-setup
+    ports: [8080:8080]
+    volumes:
+    - "./concourse-keys:/concourse-keys"
+    environment:
+      CONCOURSE_SESSION_SIGNING_KEY: /concourse-keys/session_signing_key
+      CONCOURSE_TSA_AUTHORIZED_KEYS: /concourse-keys/authorized_worker_keys
+      CONCOURSE_TSA_HOST_KEY: /concourse-keys/tsa_host_key
+
+      CONCOURSE_LOG_LEVEL: error
+      CONCOURSE_TSA_LOG_LEVEL: error
+      CONCOURSE_POSTGRES_HOST: db
+      CONCOURSE_POSTGRES_USER: *postgres-user
+      CONCOURSE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      CONCOURSE_POSTGRES_DATABASE: *postgres-db
+      CONCOURSE_EXTERNAL_URL: http://localhost:8080
+      CONCOURSE_ADD_LOCAL_USER: ${CONCOURSE_MAIN_USER}:${CONCOURSE_MAIN_PASSWORD},${CONCOURSE_NORMAL_USER}:${CONCOURSE_NORMAL_PASSWORD},${CONCOURSE_READONLY_USER}:${CONCOURSE_READONLY_PASSWORD}
+      CONCOURSE_MAIN_TEAM_LOCAL_USER: ${CONCOURSE_MAIN_USER}
+      CONCOURSE_CLUSTER_NAME: dev
+      CONCOURSE_ENABLE_PIPELINE_INSTANCES: "true"
+      CONCOURSE_ENABLE_ACROSS_STEP: "true"
+      # NOTE this connection is unencrypted!
+      CONCOURSE_VAULT_URL: *vault-addr
+      # NOTE In production you would NOT pass the root token!
+      CONCOURSE_VAULT_CLIENT_TOKEN: ${VAULT_DEV_ROOT_TOKEN_ID}
+      CONCOURSE_ENABLE_CACHE_STREAMED_VOLUMES: "true"
+      CONCOURSE_ENABLE_RESOURCE_CAUSALITY: "true"
+      CONCOURSE_CONTAINER_PLACEMENT_STRATEGY: limit-active-tasks,volume-locality
+      CONCOURSE_MAX_ACTIVE_TASKS_PER_WORKER: 1
+
+  # This container will stop as soon as the script has run.
+  web-setup:
+    image: alpine/curl
+    depends_on:
+      - web
+    volumes:
+      - "./scripts:/scripts"
+    environment:
+      CONCOURSE_ADDR: web:8080
+
+    entrypoint: /scripts/concourse-setup.sh
+
+  worker:
+    image: *concourse-image
+    command: worker
+    privileged: true
+    depends_on: [web]
+    ports:
+    - 7777:7777
+    - 7788:7788
+    volumes:
+    - "./concourse-keys:/concourse-keys"
+    stop_signal: SIGUSR2
+    environment:
+      CONCOURSE_RUNTIME: containerd
+      CONCOURSE_NAME: worker-1
+
+      CONCOURSE_TSA_PUBLIC_KEY: /concourse-keys/tsa_host_key.pub
+      CONCOURSE_TSA_WORKER_PRIVATE_KEY: /concourse-keys/worker_key
+
+      CONCOURSE_LOG_LEVEL: error
+      CONCOURSE_TSA_HOST: web:2222
+
+      CONCOURSE_BAGGAGECLAIM_LOG_LEVEL: error
+      CONCOURSE_CONTAINERD_LOG_LEVEL: error
+      CONCOURSE_BIND_IP: 0.0.0.0
+      CONCOURSE_BAGGAGECLAIM_BIND_IP: 0.0.0.0
+
+      # avoid using loopbacks
+      CONCOURSE_BAGGAGECLAIM_DRIVER: overlay
+
+      # work with docker-compose's dns
+      CONCOURSE_CONTAINERD_DNS_PROXY_ENABLE: "true"
