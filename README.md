@@ -12,6 +12,15 @@ This project is NOT adapted for production or networked use.
 
 Among other non-production ready settings, it contains hard-coded secrets, stored in the git repo. For production use, all secrets must be regenerated and must not be stored in the git repo!
 
+# What's in the box
+
+* [Concourse] v8.1.0 (ATC and web UI)
+* Concourse worker (platform: Linux)
+* [PostgreSQL] v18.3 (needed by Concourse web)
+* [Minio] latest stable S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
+* [HashiCorp Vault] v1.13.1 secret and credential manager. With this, you can learn writing real-world Concourse pipelines following security and operations best practices. See also [Concourse credential management] for how Concourse uses Vault.
+* the incomplete [Concourse primer](doc/concourse-primer.md) tutorial.
+
 # Alternative to Docker: Colima
 
 This is especially useful for macOS. See https://github.com/abiosoft/colima for details.
@@ -42,15 +51,6 @@ If there is no `*` in the output above, set the default context:
     docker context use colima
 
 Now you are ready to use the `docker` and `docker compose` CLI tools and can follow the rest of the instructions.
-
-# What's in the box
-
-* [Concourse] v8.1.0 (ATC and web UI)
-* Concourse worker (platform: Linux)
-* [PostgreSQL] v14.11 (needed by Concourse web)
-* [Minio] latest stable S3-compatible object storage. With this, you can learn writing real-world Concourse pipelines using the [concourse-s3-resource] without the need of setting up an AWS S3 (or any other cloud provider) account.
-* [HashiCorp Vault] v1.13.1 secret and credential manager. With this, you can learn writing real-world Concourse pipelines following security and operations best practices. See also [Concourse credential management] for how Concourse uses Vault.
-* the incomplete [Concourse primer](doc/concourse-primer.md) tutorial.
 
 # Usage
 
