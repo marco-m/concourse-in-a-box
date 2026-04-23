@@ -84,7 +84,7 @@ services:
       retries: 5
 
   web:
-    image: &concourse-image concourse/concourse:8.1.0
+    image: &concourse-image concourse/concourse:8.1.1
     command: web
     depends_on:
       db:
@@ -104,7 +104,7 @@ services:
       CONCOURSE_TSA_HOST_KEY: /concourse-keys/tsa_host_key
 
       CONCOURSE_LOG_LEVEL: error
-      CONCOURSE_TSA_LOG_LEVEL: error
+      CONCOURSE_TSA_LOG_LEVEL: info
       CONCOURSE_POSTGRES_HOST: db
       CONCOURSE_POSTGRES_USER: *postgres-user
       CONCOURSE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -149,17 +149,27 @@ services:
     - "./concourse-keys:/concourse-keys"
     stop_signal: SIGUSR2
     environment:
+      # Concourse historically used guardian as container runtime, and recently switched
+      # to containerd.
+      # At least with Colima as VM, containerd causes Concourse to slow down tens of
+      # seconds before taking any action. It is unclear if guardian will be any better.
+      # We cannot easily switch back to guardian, because guardian requires cgroupv1,
+      # while now linux has cgroupv2 by default.
+      # It should be possible to pass a flag to the kernel boot arguments to require
+      # cgroupsv1, but I didn't investigate further.
+      #CONCOURSE_RUNTIME: guardian
       CONCOURSE_RUNTIME: containerd
       CONCOURSE_NAME: worker-1
 
       CONCOURSE_TSA_PUBLIC_KEY: /concourse-keys/tsa_host_key.pub
       CONCOURSE_TSA_WORKER_PRIVATE_KEY: /concourse-keys/worker_key
 
-      CONCOURSE_LOG_LEVEL: error
+      CONCOURSE_LOG_LEVEL: info
+      CONCOURSE_BAGGAGECLAIM_LOG_LEVEL: info
+      CONCOURSE_CONTAINERD_LOG_LEVEL: info
+
       CONCOURSE_TSA_HOST: web:2222
 
-      CONCOURSE_BAGGAGECLAIM_LOG_LEVEL: error
-      CONCOURSE_CONTAINERD_LOG_LEVEL: error
       CONCOURSE_BIND_IP: 0.0.0.0
       CONCOURSE_BAGGAGECLAIM_BIND_IP: 0.0.0.0
 
