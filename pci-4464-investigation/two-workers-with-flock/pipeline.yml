@@ -1,0 +1,71 @@
+# bigfile-1 is generated with
+# dd bs=1024 count=1048576 </dev/urandom > bigfile-1
+# then manually updated to minio in concourse bucket
+
+resources:
+  - name: artifacts
+    type: s3
+    icon: gift
+    tags: [worker-1]
+    source:
+      bucket: concourse
+      regexp: bigfile-(.*)
+      endpoint: ((s3-endpoint))
+      region_name: ((s3-region))
+      access_key_id: ((s3-access-key))
+      secret_access_key: ((s3-secret-key))
+
+jobs:
+  - name: job1
+    max_in_flight: 1
+    plan:
+      - get: artifacts
+        tags: [worker-1]
+      - task: use-big-file
+        tags: [worker-2] # force streaming artifact from worker-1 to worker-2
+        config:
+          platform: linux
+          caches:
+            - path: ../../../tmp/cache # should be /tmp/cache on worker-2
+          image_resource:
+            type: registry-image
+            source: { repository: busybox }
+          inputs:
+          - name: artifacts
+          run:
+            path: sh
+            args:
+            - -c
+            - |
+              set -e
+              if [ ! -e "../../../tmp/cache/lock" ]; then
+                  echo "creating file"
+                  touch "../../../tmp/cache/lock"
+              fi
+              flock ../../../tmp/cache/lock -c 'echo "[worker-2] job1 is taking lock and doing hard work..." && sleep 60'
+              echo "releasing lock"
+
+  - name: job2
+    max_in_flight: 1
+    plan:
+      - task: random-task
+        tags: [worker-2]
+        config:
+          platform: linux
+          caches:
+            - path: ../../../tmp/cache # should be /tmp/cache on worker-2
+          image_resource:
+            type: registry-image
+            source: { repository: busybox }
+          run:
+            path: sh
+            args:
+            - -c
+            - |
+              set -e
+              if [ ! -e "../../../tmp/cache/lock" ]; then
+                  echo "creating file"
+                  touch "../../../tmp/cache/lock"
+              fi
+              flock ../../../tmp/cache/lock -c 'echo "[worker-2] job2 is taking lock and doing hard work..." && sleep 60'
+              echo "releasing lock"
